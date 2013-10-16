@@ -10,31 +10,46 @@
 
 @interface Cell : UICollectionViewCell
 
+
 @end
 
 @implementation Cell
+static int i;
++(void)count:(int)delta
+{
 
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        i = 0;
+    });
+    i+=delta;
+    NSLog(@"i = %d",i);
+}
 -(void)prepareForReuse
 {
+    [[self class] count:-1];
     NSLog(@"Prepare For Reuse");
 }
 
 -(void)dealloc
 {
+
     NSLog(@"Dealloc");
 }
 
 -(id)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
+    [[self class] count:1];
     NSLog(@"init");
     return self;
 }
 @end
 
-@interface ViewController () <UICollectionViewDataSource>
+@interface ViewController () <UICollectionViewDataSource,UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic,strong) UICollectionView *collectionView;
+@property (nonatomic,strong) NSMutableSet *collectionViewCells;
 @end
 
 @implementation ViewController
@@ -46,6 +61,8 @@
     [self.view addSubview:self.collectionView];
     self.collectionView.dataSource = self;
     [self.collectionView registerClass:[Cell class] forCellWithReuseIdentifier:@"a"];
+    self.collectionViewCells = [NSMutableSet new];
+
 	// Do any additional setup after loading the view, typically from a nib.
 }
 
@@ -63,9 +80,14 @@
 // The cell that is returned must be retrieved from a call to -dequeueReusableCellWithReuseIdentifier:forIndexPath:
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-UICollectionViewCell *cell =    [collectionView dequeueReusableCellWithReuseIdentifier:@"a" forIndexPath:indexPath];
-    cell.backgroundColor = [UIColor redColor];
-    return cell;
+    Cell *c = [self.collectionView dequeueReusableCellWithReuseIdentifier:@"a" forIndexPath:indexPath];
+    c.backgroundColor = [UIColor redColor];
+    return c;
+}
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    return CGSizeMake(60, 60);
 }
 
 @end
